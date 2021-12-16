@@ -1,0 +1,189 @@
+package trie;
+
+import java.util.ArrayList;
+
+/**
+ * This class implements a Trie. 
+ * 
+ * @author Sarthak Uppal
+ *
+ */
+public class Trie {
+	
+	// prevent instantiation
+	private Trie() { }
+	
+	/**
+	 * Builds a trie by inserting all words in the input array, one at a time,
+	 * in sequence FROM FIRST TO LAST. (The sequence is IMPORTANT!)
+	 * The words in the input array are all lower case.
+	 * 
+	 * @param allWords Input array of words (lowercase) to be inserted.
+	 * @return Root of trie with all words inserted from the input array
+	 */
+	public static TrieNode buildTrie(String[] allWords) {
+		/** COMPLETE THIS METHOD **/
+		
+		// FOLLOWING LINE IS A PLACEHOLDER TO ENSURE COMPILATION
+		// MODIFY IT AS NEEDED FOR YOUR IMPLEMENTATION
+		
+		
+		TrieNode firstNode = new TrieNode(null, null, null);
+		if(allWords.length == 0){
+		    return firstNode;}
+
+		firstNode.firstChild = new TrieNode(new Indexes(0, (short)(0), (short)(allWords[0].length()-1)), null, null);
+
+		TrieNode ptr = firstNode.firstChild, prev = firstNode.firstChild;
+		int equal = -1, sIndex = -1, eIndex = -1, wIndex = -1;
+
+		for(int i = 1; i < allWords.length; i++){
+			String word = allWords[i]; 
+			
+			while(ptr != null){
+				sIndex = ptr.substr.startIndex;
+				eIndex = ptr.substr.endIndex;
+				wIndex = ptr.substr.wordIndex;
+
+				if(sIndex > word.length()){
+					prev = ptr;
+					ptr = ptr.sibling;
+					continue;
+				}
+				equal = Helper(allWords[wIndex].substring(sIndex, eIndex+1), word.substring(sIndex));
+				if(equal != -1){
+					equal +=sIndex;
+				}
+				if(equal == -1){
+					prev = ptr;
+					ptr = ptr.sibling;
+				} else{
+					if(equal == eIndex){
+						prev = ptr;
+						ptr = ptr.firstChild;
+					} else if (equal < eIndex){
+						prev = ptr;
+						break;
+					}
+					}
+					
+				}
+				if(ptr == null){
+					Indexes first = new Indexes(i, (short)sIndex, (short)(word.length()-1));
+					prev.sibling = new TrieNode(first, null, null);
+				} else{
+					Indexes cIndx = prev.substr; //currentIndex
+					TrieNode cFirstChild = prev.firstChild;
+
+					Indexes cWordNewIndexes = new Indexes(cIndx.wordIndex, (short)(equal+1), cIndx.endIndex);
+					cIndx.endIndex = (short)equal;
+
+					prev.firstChild = new TrieNode(cWordNewIndexes, null, null);
+					prev.firstChild.firstChild = cFirstChild;
+					prev.firstChild.sibling = new TrieNode(new Indexes((short)i, (short)(equal + 1), (short)(word.length() -1)), null, null);
+				}
+				ptr = prev = firstNode.firstChild;
+				equal = sIndex  = eIndex = wIndex = -1;
+				
+			}
+			return firstNode;
+		}
+
+	private static int Helper(String first, String second) {
+		int ans = 0;
+		while(ans< first.length() && ans< second.length() && first.charAt(ans)== second.charAt(ans)){
+			ans++;
+		}
+		return (ans-1);
+	}
+	
+	/**
+	 * Given a trie, returns the "completion list" for a prefix, i.e. all the leaf nodes in the 
+	 * trie whose words start with this prefix. 
+	 * For instance, if the trie had the words "bear", "bull", "stock", and "bell",
+	 * the completion list for prefix "b" would be the leaf nodes that hold "bear", "bull", and "bell"; 
+	 * for prefix "be", the completion would be the leaf nodes that hold "bear" and "bell", 
+	 * and for prefix "bell", completion would be the leaf node that holds "bell". 
+	 * (The last example shows that an input prefix can be an entire word.) 
+	 * The order of returned leaf nodes DOES NOT MATTER. So, for prefix "be",
+	 * the returned list of leaf nodes can be either hold [bear,bell] or [bell,bear].
+	 *
+	 * @param root Root of Trie that stores all words to search on for completion lists
+	 * @param allWords Array of words that have been inserted into the trie
+	 * @param prefix Prefix to be completed with words in trie
+	 * @return List of all leaf nodes in trie that hold words that start with the prefix, 
+	 * 			order of leaf nodes does not matter.
+	 *         If there is no word in the tree that has this prefix, null is returned.
+	 */
+	public static ArrayList<TrieNode> completionList(TrieNode root,
+										String[] allWords, String prefix) {
+		/** COMPLETE THIS METHOD **/
+		
+		// FOLLOWING LINE IS A PLACEHOLDER TO ENSURE COMPILATION
+		// MODIFY IT AS NEEDED FOR YOUR IMPLEMENTATION
+		
+		if(root == null){
+			return null;
+		}
+		ArrayList<TrieNode> references = new ArrayList<TrieNode>();
+		TrieNode ptr = root;
+		while(ptr!= null){
+			if(ptr.substr == null){
+				ptr = ptr.firstChild;
+			}
+			String equal = allWords[ptr.substr.wordIndex];
+			String alpha = equal.substring(0, ptr.substr.endIndex+1);
+			if(equal.startsWith(prefix) || prefix.startsWith(alpha)){
+				if(ptr.firstChild!= null){
+					references.addAll(completionList(ptr.firstChild, allWords, prefix));
+					ptr = ptr.sibling;
+				}else{
+					references.add(ptr);
+					ptr = ptr.sibling;
+				}
+			
+			}else{
+				ptr = ptr.sibling;
+			}
+		}
+		return references;
+	}
+
+	public static void print(TrieNode root, String[] allWords) {
+		System.out.println("\nTRIE\n");
+		print(root, 1, allWords);
+	}
+
+	private static void print(TrieNode root, int indent, String[] words) {
+		if (root == null) {
+			return;
+		}
+		for (int i=0; i < indent-1; i++) {
+			System.out.print("    ");
+		}
+		
+		if (root.substr != null) {
+			String prefix = words[root.substr.wordIndex]
+							.substring(0, root.substr.endIndex+1);
+			System.out.println("      " + prefix);
+		}
+		
+		for (int i=0; i < indent-1; i++) {
+			System.out.print("    ");
+		}
+		System.out.print(" ---");
+		if (root.substr == null) {
+			System.out.println("root");
+		} else {
+			System.out.println(root.substr);
+		}
+		
+		for (TrieNode ptr=root.firstChild; ptr != null; ptr=ptr.sibling) {
+			for (int i=0; i < indent-1; i++) {
+				System.out.print("    ");
+			}
+			System.out.println("     |");
+			print(ptr, indent+1, words);
+		}
+	}
+ }
